@@ -1,29 +1,63 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import pandas as pd
+from supabase import create_client
 
-from db_utils import init_db, get_results, load_games, TEAM_NAMES
-
+# ---------------------------------------------------------
+# Streamlit Setup
+# ---------------------------------------------------------
 st.set_page_config(page_title="Plausch Challenge", layout="wide")
-
-# DB initialisieren
-init_db()
-
-# Auto-Refresh alle 5 Sekunden
 st_autorefresh(interval=5000, key="refresh")
 
 st.title("Plausch Challenge – Live Rangliste & Spielplan")
 st.markdown("Die Seite aktualisiert sich automatisch, sobald neue Resultate gemeldet werden.")
 
-results = get_results()
-games = load_games()
+# ---------------------------------------------------------
+# Supabase Client
+# ---------------------------------------------------------
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
+)
+
+# ---------------------------------------------------------
+# DB Funktionen
+# ---------------------------------------------------------
+def load_results():
+    """Lädt alle Resultate aus Supabase."""
+    res = supabase.table("results").select("*").execute()
+    return res.data
+
+def load_games():
+    """Lädt alle Spiele aus Supabase."""
+    res = supabase.table("games").select("*").execute()
+    return res.data
+
+# ---------------------------------------------------------
+# Team-Namen (Mapping)
+# ---------------------------------------------------------
+TEAM_NAMES = {
+    "A": "Team A",
+    "B": "Team B",
+    "C": "Team C",
+    "D": "Team D",
+    "E": "Team E",
+    "F": "Team F",
+    "G": "Team G",
+    "H": "Team H",
+}
 
 teams = sorted(TEAM_NAMES.values())
 
-# -------------------------
-# RANGLISTE
-# -------------------------
+# ---------------------------------------------------------
+# Daten laden
+# ---------------------------------------------------------
+results = load_results()
+games = load_games()
 
+# ---------------------------------------------------------
+# RANGLISTE
+# ---------------------------------------------------------
 rangliste = pd.DataFrame({"Team": teams, "Punkte": 0})
 
 for row in results:
@@ -42,7 +76,6 @@ for row in results:
 
 rangliste = rangliste.sort_values("Punkte", ascending=False).reset_index(drop=True)
 
-
 def highlight_row(row):
     if row.name == 0:
         return ["background-color: gold; font-weight: bold"] * len(row)
@@ -52,7 +85,6 @@ def highlight_row(row):
         return ["background-color: #cd7f32; font-weight: bold"] * len(row)
     return [""] * len(row)
 
-
 st.markdown("## 🏆 Live Rangliste")
 st.dataframe(
     rangliste.style.apply(highlight_row, axis=1),
@@ -61,10 +93,9 @@ st.dataframe(
 
 st.markdown("---")
 
-# -------------------------
+# ---------------------------------------------------------
 # TEAM-FILTER
-# -------------------------
-
+# ---------------------------------------------------------
 st.markdown("## 🔍 Team-Filter")
 
 team_filter_options = ["Alle Teams"] + teams
@@ -72,29 +103,30 @@ selected_team = st.selectbox("Team auswählen", team_filter_options)
 
 st.markdown("---")
 
-# -------------------------
+# ---------------------------------------------------------
 # SPIELPLAN
-# -------------------------
-
+# ---------------------------------------------------------
 st.markdown("## 📅 Spielplan – Alle Spiele")
 
+# Spiele nach Slot gruppieren
 slots = {}
-for game_id, g in games.items():
-    slots.setdefault(g["slot"], []).append((game_id, g))
+for g in games:
+    slot = g["slot"]
+    slots.setdefault(slot, []).append(g)
 
 sorted_slots = dict(sorted(slots.items()))
 
 for slot, games_in_slot in sorted_slots.items():
-    st.markdown(f"### Timeslot {slot}: {games_in_slot[0][1]['time']}")
+    st.markdown(f"### Timeslot {slot}: {games_in_slot[0]['time']}")
 
     teams_with_game = set()
 
-    for game_id, g in games_in_slot:
-        if g["team1"] == "Spielfrei" or g["team2"] == "Spielfrei":
+    for g in games_in_slot:
+        if g["team_code_1"] == "Spielfrei" or g["team_code_2"] == "Spielfrei":
             continue
 
-        team1 = TEAM_NAMES[g["team1"]]
-        team2 = TEAM_NAMES[g["team2"]]
+        team1 = TEAM_NAMES[g["team_code_1"]]
+        team2 = TEAM_NAMES[g["team_code_2"]]
 
         teams_with_game.add(team1)
         teams_with_game.add(team2)
@@ -105,7 +137,8 @@ for slot, games_in_slot in sorted_slots.items():
         st.markdown(f"**{team1} vs {team2}**")
         st.markdown(f"Sportart: **{g['field']}**")
 
-        match = next((r for r in results if r["game_id"] == game_id), None)
+        # Resultat suchen
+        match = next((r for r in results if r["game_id"] == g["game_id"]), None)
 
         if match:
             st.success(f"Resultat: {team1} {match['score1']} – {match['score2']} {team2}")
@@ -114,6 +147,7 @@ for slot, games_in_slot in sorted_slots.items():
 
         st.markdown("---")
 
+    # Spielfrei anzeigen
     for team in teams:
         if team not in teams_with_game:
             if selected_team != "Alle Teams" and selected_team != team:
