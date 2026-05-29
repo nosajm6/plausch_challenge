@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 # ---------------------------------------------------------
-# Supabase Client (Railway-kompatibel!)
+# Supabase Client
 # ---------------------------------------------------------
 supabase = create_client(
     os.environ["SUPABASE_URL"],
@@ -14,21 +14,20 @@ supabase = create_client(
 # ---------------------------------------------------------
 # DB Funktionen
 # ---------------------------------------------------------
-def load_results():
-    res = supabase.table("results").select("*").order("game_id").execute()
-    return res.data
-
 def load_games():
     res = supabase.table("games").select("*").order("game_id").execute()
     return res.data
 
-def delete_result(game_id):
-    supabase.table("results").delete().eq("game_id", game_id).execute()
-
 def update_result(game_id, score1, score2):
-    supabase.table("results").update({
+    supabase.table("games").update({
         "score1": score1,
         "score2": score2
+    }).eq("game_id", game_id).execute()
+
+def delete_result(game_id):
+    supabase.table("games").update({
+        "score1": None,
+        "score2": None
     }).eq("game_id", game_id).execute()
 
 # ---------------------------------------------------------
@@ -63,22 +62,15 @@ if st.button("Logout"):
     st.session_state.admin_logged_in = False
     st.rerun()
 
-results = load_results()
 games = load_games()
-
-# Mapping game_id → game
-game_map = {g["game_id"]: g for g in games}
 
 # ---------------------------------------------------------
 # Resultate Tabelle
 # ---------------------------------------------------------
 st.markdown("## 📊 Alle Resultate")
 
-if len(results) == 0:
-    st.info("Noch keine Resultate vorhanden.")
-else:
-    df = pd.DataFrame(results)
-    st.dataframe(df, use_container_width=True)
+df = pd.DataFrame(games)
+st.dataframe(df, use_container_width=True)
 
 st.markdown("---")
 
@@ -87,15 +79,10 @@ st.markdown("---")
 # ---------------------------------------------------------
 st.markdown("## ✏️ Resultate bearbeiten oder löschen")
 
-for r in results:
-    game_id = r["game_id"]
-    g = game_map.get(game_id)
-
-    if not g:
-        continue
-
-    team1 = r["team_name_1"]
-    team2 = r["team_name_2"]
+for g in games:
+    game_id = g["game_id"]
+    team1 = g["team_name_1"]
+    team2 = g["team_name_2"]
 
     st.markdown(f"### Spiel {game_id}: {team1} vs {team2}")
 
@@ -105,7 +92,7 @@ for r in results:
         new_score1 = st.number_input(
             f"{team1} Punkte",
             min_value=0,
-            value=r["score1"],
+            value=g["score1"] if g["score1"] is not None else 0,
             key=f"edit_{game_id}_s1"
         )
 
@@ -113,7 +100,7 @@ for r in results:
         new_score2 = st.number_input(
             f"{team2} Punkte",
             min_value=0,
-            value=r["score2"],
+            value=g["score2"] if g["score2"] is not None else 0,
             key=f"edit_{game_id}_s2"
         )
 
