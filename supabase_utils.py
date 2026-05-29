@@ -33,10 +33,10 @@ def save_result(row):
         "time": time,
         "field": field,
         "team1": team1_code,
-        "team1_name": TEAM_NAMES[team1_code],
+        "team_name_1": TEAM_NAMES[team1_code],
         "score1": score1,
         "team2": team2_code,
-        "team2_name": TEAM_NAMES[team2_code],
+        "team_name_2": TEAM_NAMES[team2_code],
         "score2": score2,
     }).execute()
 
