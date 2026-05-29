@@ -44,8 +44,8 @@ result_map = {r["game_id"]: r for r in results}
 rangliste = pd.DataFrame({"Team": teams, "Punkte": 0})
 
 for r in results:
-    t1 = r["team_name_1"]
-    t2 = r["team_name_2"]
+    t1 = r["team1_name"]
+    t2 = r["team2_name"]
     s1 = r["score1"]
     s2 = r["score2"]
 
@@ -58,6 +58,9 @@ for r in results:
         rangliste.loc[rangliste.Team == t2, "Punkte"] += 1
 
 rangliste = rangliste.sort_values("Punkte", ascending=False).reset_index(drop=True)
+
+# Platznummer hinzufügen (1–6 statt 0–5)
+rangliste.insert(0, "Platz", rangliste.index + 1)
 
 def highlight_row(row):
     if row.name == 0:
@@ -73,8 +76,6 @@ st.dataframe(
     rangliste.style.apply(highlight_row, axis=1),
     use_container_width=True,
 )
-
-st.markdown("---")
 
 # ---------------------------------------------------------
 # TEAM-FILTER
