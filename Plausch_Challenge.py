@@ -1,8 +1,11 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import pandas as pd
+import json
 from supabase import create_client
 import os
+
+from supabase_utils import TEAM_NAMES, get_results
 
 # ---------------------------------------------------------
 # Streamlit Setup
@@ -14,7 +17,7 @@ st.title("Plausch Challenge – Live Rangliste & Spielplan")
 st.markdown("Die Seite aktualisiert sich automatisch, sobald neue Resultate gemeldet werden.")
 
 # ---------------------------------------------------------
-# Supabase Client (Railway-kompatibel!)
+# Supabase Client (nur falls direkt gebraucht)
 # ---------------------------------------------------------
 supabase = create_client(
     os.environ["SUPABASE_URL"],
@@ -22,46 +25,29 @@ supabase = create_client(
 )
 
 # ---------------------------------------------------------
-# DB Funktionen
+# Spielplan aus JSON laden
 # ---------------------------------------------------------
-def load_games():
-    res = supabase.table("games").select("*").order("game_id").execute()
-    return res.data
-
-# ---------------------------------------------------------
-# Team-Namen (Mapping)
-# ---------------------------------------------------------
-TEAM_NAMES = {
-    "A": "Team A",
-    "B": "Team B",
-    "C": "Team C",
-    "D": "Team D",
-    "E": "Team E",
-    "F": "Team F",
-    "G": "Team G",
-    "H": "Team H",
-}
+with open("games.json", "r", encoding="utf-8") as f:
+    games = json.load(f)
 
 teams = sorted(TEAM_NAMES.values())
 
 # ---------------------------------------------------------
-# Daten laden
+# Resultate laden
 # ---------------------------------------------------------
-games = load_games()
+results = get_results()
+result_map = {r["game_id"]: r for r in results}
 
 # ---------------------------------------------------------
 # RANGLISTE
 # ---------------------------------------------------------
 rangliste = pd.DataFrame({"Team": teams, "Punkte": 0})
 
-for g in games:
-    if g["score1"] is None or g["score2"] is None:
-        continue  # kein Resultat gemeldet
-
-    t1 = g["team_name_1"]
-    t2 = g["team_name_2"]
-    s1 = g["score1"]
-    s2 = g["score2"]
+for r in results:
+    t1 = r["team_name_1"]
+    t2 = r["team_name_2"]
+    s1 = r["score1"]
+    s2 = r["score2"]
 
     if s1 > s2:
         rangliste.loc[rangliste.Team == t1, "Punkte"] += 2
@@ -105,25 +91,23 @@ st.markdown("---")
 # ---------------------------------------------------------
 st.markdown("## 📅 Spielplan – Alle Spiele")
 
-# Spiele nach Slot gruppieren
 slots = {}
-for g in games:
-    slot = g["slot"]
-    slots.setdefault(slot, []).append(g)
+for game_id, g in games.items():
+    slots.setdefault(g["slot"], []).append((game_id, g))
 
 sorted_slots = dict(sorted(slots.items()))
 
 for slot, games_in_slot in sorted_slots.items():
-    st.markdown(f"### Timeslot {slot}: {games_in_slot[0]['time']}")
+    st.markdown(f"### Timeslot {slot}: {games_in_slot[0][1]['time']}")
 
     teams_with_game = set()
 
-    for g in games_in_slot:
-        if g["team_code_1"] == "Spielfrei" or g["team_code_2"] == "Spielfrei":
+    for game_id, g in games_in_slot:
+        if g["team1"] == "Spielfrei" or g["team2"] == "Spielfrei":
             continue
 
-        team1 = TEAM_NAMES[g["team_code_1"]]
-        team2 = TEAM_NAMES[g["team_code_2"]]
+        team1 = TEAM_NAMES[g["team1"]]
+        team2 = TEAM_NAMES[g["team2"]]
 
         teams_with_game.add(team1)
         teams_with_game.add(team2)
@@ -134,15 +118,15 @@ for slot, games_in_slot in sorted_slots.items():
         st.markdown(f"**{team1} vs {team2}**")
         st.markdown(f"Sportart: **{g['field']}**")
 
-        # Resultat anzeigen
-        if g["score1"] is not None and g["score2"] is not None:
-            st.success(f"Resultat: {team1} {g['score1']} – {g['score2']} {team2}")
+        match = result_map.get(game_id)
+
+        if match:
+            st.success(f"Resultat: {team1} {match['score1']} – {match['score2']} {team2}")
         else:
             st.info("Noch kein Resultat gemeldet")
 
         st.markdown("---")
 
-    # Spielfrei anzeigen
     for team in teams:
         if team not in teams_with_game:
             if selected_team != "Alle Teams" and selected_team != team:
