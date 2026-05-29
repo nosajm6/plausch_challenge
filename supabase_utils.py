@@ -10,7 +10,7 @@ supabase = create_client(
 )
 
 # ---------------------------------------------------------
-# Team-Namen (zentral für ganze App)
+# Team-Namen (zentral)
 # ---------------------------------------------------------
 TEAM_NAMES = {
     "A": "Rasselbande",
@@ -22,19 +22,22 @@ TEAM_NAMES = {
 }
 
 # ---------------------------------------------------------
-# Resultate speichern
+# Resultate speichern / updaten
+# row = [game_id, time, field, team1_code, score1, team2_code, score2]
 # ---------------------------------------------------------
 def save_result(row):
+    game_id, time, field, team1_code, score1, team2_code, score2 = row
+
     supabase.table("results").upsert({
-        "game_id": row[0],
-        "time": row[1],
-        "field": row[2],
-        "team1": row[3],
-        "team1_name": TEAM_NAMES[row[3]],
-        "score1": row[5],
-        "team2": row[6],
-        "team2_name": TEAM_NAMES[row[6]],
-        "score2": row[8]
+        "game_id": game_id,
+        "time": time,
+        "field": field,
+        "team1": team1_code,
+        "team1_name": TEAM_NAMES[team1_code],
+        "score1": score1,
+        "team2": team2_code,
+        "team2_name": TEAM_NAMES[team2_code],
+        "score2": score2,
     }).execute()
 
 # ---------------------------------------------------------
@@ -48,4 +51,4 @@ def delete_result(game_id):
 # ---------------------------------------------------------
 def get_results():
     res = supabase.table("results").select("*").execute()
-    return res.data
+    return res.data or []
