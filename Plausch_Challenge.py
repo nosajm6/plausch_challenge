@@ -75,6 +75,7 @@ st.markdown("## 🏆 Live Rangliste")
 st.dataframe(
     rangliste.style.apply(highlight_row, axis=1),
     use_container_width=True,
+    hide_index=True
 )
 
 # ---------------------------------------------------------
