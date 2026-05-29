@@ -27,7 +27,7 @@
   "Spiel 20": { "slot": 7, "time": "15:00 - 15:30", "field": "Frisbee",     "team1": "Spielfrei", "team2": "Spielfrei" },
   "Spiel 21": { "slot": 7, "time": "15:00 - 15:30", "field": "Völkerball", "team1": "B", "team2": "D" },
 
-  "Spiel 22": { "slot": 8, "time": "15:30 - 16:00", "field": "Handball",    "team1": "A", "team2": "D" },
+  "Spiel 22": { "slot": 8, "time": "15:30 - 16:30", "field": "Handball",    "team1": "A", "team2": "D" },
   "Spiel 23": { "slot": 8, "time": "15:30 - 16:00", "field": "Frisbee",     "team1": "B", "team2": "E" },
   "Spiel 24": { "slot": 8, "time": "15:30 - 16:00", "field": "Völkerball", "team1": "C", "team2": "F" }
 }
