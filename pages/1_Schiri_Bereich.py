@@ -3,7 +3,7 @@ from supabase import create_client
 import os
 
 # ---------------------------------------------------------
-# Supabase Client
+# Supabase Client (Railway-kompatibel!)
 # ---------------------------------------------------------
 supabase = create_client(
     os.environ["SUPABASE_URL"],
@@ -28,28 +28,14 @@ TEAM_NAMES = {
 # DB Funktionen
 # ---------------------------------------------------------
 def load_games():
-    res = supabase.table("games").select("*").execute()
+    res = supabase.table("games").select("*").order("game_id").execute()
     return res.data
 
-def load_results():
-    res = supabase.table("results").select("*").execute()
-    return res.data
-
-def save_result(game_id, time, field,
-                team_code_1, team_name_1, score1,
-                team_code_2, team_name_2, score2):
-
-    supabase.table("results").insert({
-        "game_id": game_id,
-        "time": time,
-        "field": field,
-        "team_code_1": team_code_1,
-        "team_name_1": team_name_1,
+def save_result(game_id, score1, score2):
+    supabase.table("games").update({
         "score1": score1,
-        "team_code_2": team_code_2,
-        "team_name_2": team_name_2,
         "score2": score2
-    }).execute()
+    }).eq("game_id", game_id).execute()
 
 # ---------------------------------------------------------
 # Login
@@ -84,13 +70,6 @@ if st.button("Logout"):
     st.rerun()
 
 games = load_games()
-results = load_results()
-
-# Resultate nach game_id mappen
-existing_results = {
-    r["game_id"]: (r["score1"], r["score2"])
-    for r in results
-}
 
 # Spiele nach Slot gruppieren
 slots = {}
@@ -132,7 +111,7 @@ for slot, games_in_slot in sorted_slots.items():
 
         st.markdown(f"### Spielfeld {g['field']} – {team1} vs {team2}")
 
-        already_reported = g["game_id"] in existing_results
+        already_reported = g["score1"] is not None and g["score2"] is not None
 
         col1, col2 = st.columns(2)
 
@@ -143,6 +122,7 @@ for slot, games_in_slot in sorted_slots.items():
                 min_value=0,
                 key=f"{g['game_id']}_score1",
                 disabled=already_reported,
+                value=g["score1"] if g["score1"] is not None else 0
             )
 
         with col2:
@@ -152,11 +132,11 @@ for slot, games_in_slot in sorted_slots.items():
                 min_value=0,
                 key=f"{g['game_id']}_score2",
                 disabled=already_reported,
+                value=g["score2"] if g["score2"] is not None else 0
             )
 
         if already_reported:
-            s1, s2 = existing_results[g["game_id"]]
-            st.success(f"Bereits gemeldet: {team1} {s1} – {s2} {team2}")
+            st.success(f"Bereits gemeldet: {team1} {g['score1']} – {g['score2']} {team2}")
             st.button(
                 "Resultat bereits gemeldet",
                 disabled=True,
@@ -169,13 +149,7 @@ for slot, games_in_slot in sorted_slots.items():
             ):
                 save_result(
                     g["game_id"],
-                    g["time"],
-                    g["field"],
-                    g["team_code_1"],
-                    team1,
                     int(score1),
-                    g["team_code_2"],
-                    team2,
                     int(score2),
                 )
 
