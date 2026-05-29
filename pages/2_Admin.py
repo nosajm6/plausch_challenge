@@ -1,10 +1,39 @@
 import streamlit as st
+from supabase import create_client
+import pandas as pd
 
-from db_utils import init_db, get_results, save_result, delete_result
+# ---------------------------------------------------------
+# Supabase Client
+# ---------------------------------------------------------
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
+)
 
+# ---------------------------------------------------------
+# DB Funktionen
+# ---------------------------------------------------------
+def load_results():
+    res = supabase.table("results").select("*").order("game_id").execute()
+    return res.data
+
+def load_games():
+    res = supabase.table("games").select("*").order("game_id").execute()
+    return res.data
+
+def delete_result(game_id):
+    supabase.table("results").delete().eq("game_id", game_id).execute()
+
+def update_result(game_id, score1, score2):
+    supabase.table("results").update({
+        "score1": score1,
+        "score2": score2
+    }).eq("game_id", game_id).execute()
+
+# ---------------------------------------------------------
+# Login
+# ---------------------------------------------------------
 ADMIN_PASSWORD = "admin123"
-
-init_db()
 
 if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
@@ -24,74 +53,78 @@ if not st.session_state.admin_logged_in:
 
     st.stop()
 
-st.title("Admin‑Bereich – Resultate bearbeiten")
+# ---------------------------------------------------------
+# Admin UI
+# ---------------------------------------------------------
+st.title("Admin‑Bereich – Resultate verwalten")
 
 if st.button("Logout"):
     st.session_state.admin_logged_in = False
     st.rerun()
 
-rows = get_results()
+results = load_results()
+games = load_games()
 
-if not rows:
-    st.info("Noch keine Resultate eingetragen.")
-    st.stop()
+# Mapping game_id → game
+game_map = {g["game_id"]: g for g in games}
 
-st.subheader("Alle gemeldeten Resultate")
+# ---------------------------------------------------------
+# Resultate Tabelle
+# ---------------------------------------------------------
+st.markdown("## 📊 Alle Resultate")
 
-for row in rows:
-    game_id = row["game_id"]
-    time = row["time"]
-    field = row["field"]
-    team1_name = row["team_name_1"]
-    team2_name = row["team_name_2"]
-    score1_val = row["score1"]
-    score2_val = row["score2"]
+if len(results) == 0:
+    st.info("Noch keine Resultate vorhanden.")
+else:
+    df = pd.DataFrame(results)
+    st.dataframe(df, use_container_width=True)
 
-    st.markdown(f"## {game_id}: {team1_name} vs {team2_name}")
-    st.markdown(f"**Sportart:** {field}  |  **Timeslot:** {time}")
+st.markdown("---")
 
-    col1, col2 = st.columns(2)
+# ---------------------------------------------------------
+# Resultate bearbeiten / löschen
+# ---------------------------------------------------------
+st.markdown("## ✏️ Resultate bearbeiten oder löschen")
+
+for r in results:
+    game_id = r["game_id"]
+    g = game_map.get(game_id)
+
+    if not g:
+        continue
+
+    team1 = r["team_name_1"]
+    team2 = r["team_name_2"]
+
+    st.markdown(f"### Spiel {game_id}: {team1} vs {team2}")
+
+    col1, col2, col3 = st.columns([2, 2, 1])
 
     with col1:
         new_score1 = st.number_input(
-            f"{team1_name}",
+            f"{team1} Punkte",
             min_value=0,
-            value=int(score1_val),
-            key=f"score1_{game_id}",
+            value=r["score1"],
+            key=f"edit_{game_id}_s1"
         )
 
     with col2:
         new_score2 = st.number_input(
-            f"{team2_name}",
+            f"{team2} Punkte",
             min_value=0,
-            value=int(score2_val),
-            key=f"score2_{game_id}",
+            value=r["score2"],
+            key=f"edit_{game_id}_s2"
         )
 
-    colA, colB = st.columns([1, 1])
-
-    with colA:
+    with col3:
         if st.button("Speichern", key=f"save_{game_id}"):
-            save_result(
-                [
-                    game_id,
-                    time,
-                    field,
-                    row["team1"],
-                    team1_name,
-                    int(new_score1),
-                    row["team2"],
-                    team2_name,
-                    int(new_score2),
-                ]
-            )
-            st.success("Resultat aktualisiert!")
+            update_result(game_id, int(new_score1), int(new_score2))
+            st.success("Resultat aktualisiert")
             st.rerun()
 
-    with colB:
         if st.button("Löschen", key=f"delete_{game_id}"):
             delete_result(game_id)
-            st.warning("Resultat gelöscht!")
+            st.warning("Resultat gelöscht")
             st.rerun()
 
     st.markdown("---")
