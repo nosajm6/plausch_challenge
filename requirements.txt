@@ -1,4 +1,5 @@
 streamlit
+streamlit-autorefresh
 supabase
 python-dotenv
 pandas
