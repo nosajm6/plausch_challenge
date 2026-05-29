@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 from supabase import create_client
+import os
 
 # ---------------------------------------------------------
 # Streamlit Setup
@@ -13,23 +14,21 @@ st.title("Plausch Challenge – Live Rangliste & Spielplan")
 st.markdown("Die Seite aktualisiert sich automatisch, sobald neue Resultate gemeldet werden.")
 
 # ---------------------------------------------------------
-# Supabase Client
+# Supabase Client (Railway-kompatibel!)
 # ---------------------------------------------------------
 supabase = create_client(
-    st.secrets["SUPABASE_URL"],
-    st.secrets["SUPABASE_KEY"]
+    os.environ["SUPABASE_URL"],
+    os.environ["SUPABASE_KEY"]
 )
 
 # ---------------------------------------------------------
 # DB Funktionen
 # ---------------------------------------------------------
 def load_results():
-    """Lädt alle Resultate aus Supabase."""
     res = supabase.table("results").select("*").execute()
     return res.data
 
 def load_games():
-    """Lädt alle Spiele aus Supabase."""
     res = supabase.table("games").select("*").execute()
     return res.data
 
