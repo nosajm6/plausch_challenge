@@ -24,12 +24,8 @@ supabase = create_client(
 # ---------------------------------------------------------
 # DB Funktionen
 # ---------------------------------------------------------
-def load_results():
-    res = supabase.table("results").select("*").execute()
-    return res.data
-
 def load_games():
-    res = supabase.table("games").select("*").execute()
+    res = supabase.table("games").select("*").order("game_id").execute()
     return res.data
 
 # ---------------------------------------------------------
@@ -51,7 +47,6 @@ teams = sorted(TEAM_NAMES.values())
 # ---------------------------------------------------------
 # Daten laden
 # ---------------------------------------------------------
-results = load_results()
 games = load_games()
 
 # ---------------------------------------------------------
@@ -59,11 +54,14 @@ games = load_games()
 # ---------------------------------------------------------
 rangliste = pd.DataFrame({"Team": teams, "Punkte": 0})
 
-for row in results:
-    t1 = row["team_name_1"]
-    t2 = row["team_name_2"]
-    s1 = row["score1"]
-    s2 = row["score2"]
+for g in games:
+    if g["score1"] is None or g["score2"] is None:
+        continue  # kein Resultat gemeldet
+
+    t1 = g["team_name_1"]
+    t2 = g["team_name_2"]
+    s1 = g["score1"]
+    s2 = g["score2"]
 
     if s1 > s2:
         rangliste.loc[rangliste.Team == t1, "Punkte"] += 2
@@ -136,11 +134,9 @@ for slot, games_in_slot in sorted_slots.items():
         st.markdown(f"**{team1} vs {team2}**")
         st.markdown(f"Sportart: **{g['field']}**")
 
-        # Resultat suchen
-        match = next((r for r in results if r["game_id"] == g["game_id"]), None)
-
-        if match:
-            st.success(f"Resultat: {team1} {match['score1']} – {match['score2']} {team2}")
+        # Resultat anzeigen
+        if g["score1"] is not None and g["score2"] is not None:
+            st.success(f"Resultat: {team1} {g['score1']} – {g['score2']} {team2}")
         else:
             st.info("Noch kein Resultat gemeldet")
 
