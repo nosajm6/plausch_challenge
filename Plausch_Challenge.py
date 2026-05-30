@@ -44,8 +44,8 @@ result_map = {r["game_id"]: r for r in results}
 rangliste = pd.DataFrame({"Team": teams, "Punkte": 0})
 
 for r in results:
-    t1 = r["team1_name"]
-    t2 = r["team2_name"]
+    t1 = r["team_name_1"]
+    t2 = r["team_name_2"]
     s1 = r["score1"]
     s2 = r["score2"]
 
