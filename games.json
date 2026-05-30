@@ -15,20 +15,20 @@
   "Spiel 11": { "slot": 4, "time": "12:30 - 13:00", "field": "Frisbee",     "team1": "Spielfrei", "team2": "Spielfrei" },
   "Spiel 12": { "slot": 4, "time": "12:30 - 13:00", "field": "Völkerball", "team1": "Spielfrei", "team2": "Spielfrei" },
 
-  "Spiel 13": { "slot": 5, "time": "14:00 - 14:30", "field": "Handball",    "team1": "Spielfrei", "team2": "Spielfrei" },
-  "Spiel 14": { "slot": 5, "time": "14:00 - 14:30", "field": "Frisbee",     "team1": "C", "team2": "D" },
-  "Spiel 15": { "slot": 5, "time": "14:00 - 14:30", "field": "Völkerball", "team1": "A", "team2": "E" },
+  "Spiel 13": { "slot": 5, "time": "14:00 - 14:30", "field": "Handball",    "team1": "A", "team2": "B" },
+  "Spiel 14": { "slot": 5, "time": "14:00 - 14:30", "field": "Frisbee",     "team1": "D", "team2": "E" },
+  "Spiel 15": { "slot": 5, "time": "14:00 - 14:30", "field": "Völkerball", "team1": "C", "team2": "F" },
 
-  "Spiel 16": { "slot": 6, "time": "14:30 - 15:00", "field": "Handball",    "team1": "B", "team2": "C" },
-  "Spiel 17": { "slot": 6, "time": "14:30 - 15:00", "field": "Frisbee",     "team1": "A", "team2": "F" },
-  "Spiel 18": { "slot": 6, "time": "14:30 - 15:00", "field": "Völkerball", "team1": "Spielfrei", "team2": "Spielfrei" },
+  "Spiel 16": { "slot": 6, "time": "14:30 - 15:00", "field": "Handball",    "team1": "C", "team2": "D" },
+  "Spiel 17": { "slot": 6, "time": "14:30 - 15:00", "field": "Frisbee",     "team1": "B", "team2": "F" },
+  "Spiel 18": { "slot": 6, "time": "14:30 - 15:00", "field": "Völkerball", "team1": "A", "team2": "E" },
 
   "Spiel 19": { "slot": 7, "time": "15:00 - 15:30", "field": "Handball",    "team1": "E", "team2": "F" },
-  "Spiel 20": { "slot": 7, "time": "15:00 - 15:30", "field": "Frisbee",     "team1": "Spielfrei", "team2": "Spielfrei" },
+  "Spiel 20": { "slot": 7, "time": "15:00 - 15:30", "field": "Frisbee",     "team1": "A", "team2": "C" },
   "Spiel 21": { "slot": 7, "time": "15:00 - 15:30", "field": "Völkerball", "team1": "B", "team2": "D" },
 
-  "Spiel 22": { "slot": 8, "time": "15:30 - 16:00", "field": "Handball",    "team1": "A", "team2": "D" },
-  "Spiel 23": { "slot": 8, "time": "15:30 - 16:00", "field": "Frisbee",     "team1": "B", "team2": "E" },
-  "Spiel 24": { "slot": 8, "time": "15:30 - 16:00", "field": "Völkerball", "team1": "C", "team2": "F" }
+  "Spiel 22": { "slot": 8, "time": "15:30 - 16:00", "field": "Handball",    "team1": "Spielfrei", "team2": "Spielfrei" },
+  "Spiel 23": { "slot": 8, "time": "15:30 - 16:00", "field": "Frisbee",     "team1": "Spielfrei", "team2": "Spielfrei" },
+  "Spiel 24": { "slot": 8, "time": "15:30 - 16:00", "field": "Völkerball", "team1": "Spielfrei", "team2": "Spielfrei" }
 }
 
